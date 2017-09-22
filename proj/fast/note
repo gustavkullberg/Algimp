@@ -1,0 +1,4 @@
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+
+CFLAGS = -m32 -O3 -Wall -Wextra -std=c11 -mcpu=970 -mtune=970 -Wno-format -Wno-parentheses
+

@@ -1,0 +1,4 @@
+gcc version 4.9.2 (Debian 4.9.2-10) 
+
+CFLAGS = -m32 -Os -Wall -Wextra -std=c11 -mcpu=970 -mtune=970 -Wno-format -Wno-parentheses
+
