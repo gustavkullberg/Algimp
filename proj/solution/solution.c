@@ -51,7 +51,46 @@ void divide(const fraction* f1, const fraction* f2, fraction* f3) {
 }
 void subtract(const fraction* f1, const fraction* f2, fraction* f3) {
     f3->d = f1->d * f2->d;
-    f3->n = f1->n*f2->d - f2->n*f1->d;
+    f3->n = (f1->n*f2->d - f2->n*f1->d);
+}
+
+int gcd(int u, int v)
+{
+    if (u == v)
+        return u;
+
+    if (u == 0)
+        return v;
+
+    if (v == 0)
+        return u;
+
+    // look for factors of 2
+    if (~u & 1) // u is even
+    {
+        if (v & 1) // v is odd
+            return gcd(u >> 1, v);
+        else // both u and v are even
+            return gcd(u >> 1, v >> 1) << 1;
+    }
+
+    if (~v & 1) // u is odd, v is even
+        return gcd(u, v >> 1);
+
+    // reduce larger argument
+    if (u > v)
+        return gcd((u - v) >> 1, v);
+
+    return gcd((v - u) >> 1, u);
+
+}
+
+fraction shorten(fraction f)
+{
+    int div = gcd(f.n, f.d);
+    f.n = f.n/div;
+    f.d = f.d/div;
+    return(f);
 }
 
 fraction cmpMax(fraction f1, fraction f2) {
@@ -119,18 +158,31 @@ bool makeSolution(fraction Br, fraction br, int size, fraction solutions[size], 
 
 
 
-int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction solutions[rows]){
+int fm_stages(size_t rows, size_t cols, fraction matrix[1000][cols], fraction solutions[1000], fraction tempMatrix[1000][cols], fraction tempSolution[1000], size_t orgRows, size_t orgCols){
     int n1 = 0;
     int n2 = 0;
     int rowChange;
-    //int
+    matrix[0][1].n = 4;
+    printMatrix(rows, orgCols, matrix, solutions);
+    printf("matrix[0][0] = %d/%d \n", matrix[0][0].n, matrix[0][0].d);
+    printf("matrix[0][1] = %d/%d \n", matrix[0][1].n, matrix[0][1].d);
+    printf("matrix[1][0] = %d/%d \n", matrix[1][0].n, matrix[1][0].d);
+    printf("matrix[1][1] = %d/%d \n", matrix[1][1].n, matrix[1][1].d);
+
     for(i = 0; i <rows; i++) {
-        if(getSign(matrix[i][cols-1])>0)
+        if(getSign(matrix[i][cols-1])>0) {
+            printf("%d/%d was positive! \n", matrix[i][cols-1].n, matrix[i][cols-1].d);
+            printf("matrix[1][0] = %d/%d \n", matrix[1][0].n, matrix[1][0].d);
+            printf("indexes are: i=%d, cols-1=%lu \n", i, cols-1);
             n1++;
-        else if(getSign(matrix[i][cols-1])<0)
+        }
+        else if(getSign(matrix[i][cols-1])<0) {
+            printf("%d/%d was negative! \n", matrix[i][cols - 1].n, matrix[i][cols - 1].d);
             n2++;
+        }
     }
     n2 += n1;
+    printf("Rows are: %zu, Cols are: %zu \n", rows, cols);
     printf("n1 is: %d, n2 is: %d\n", n1, n2);
     fraction temp[cols+1];
 
@@ -190,7 +242,7 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
         }
     }
     printf("\n \n");
-    printMatrix(rows, cols, matrix, solutions);
+    printMatrix(rows, orgCols, matrix, solutions);
     printf("\n \n");
     for(i = 0; i < n2; i++) {
         for(j = 0; j < cols-1; j++) {
@@ -199,7 +251,7 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
         divide(&solutions[i], &matrix[i][cols-1], &solutions[i]);
         matrix[i][cols-1].n = matrix[i][cols-1].d = 1;
     }
-    printMatrix(rows, cols, matrix, solutions);
+    printMatrix(rows, orgCols, matrix, solutions);
     if(!(cols > 1)) {
         //Check if lösbart
         if(n2>n1) {
@@ -222,7 +274,7 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
 
         }
         cont = true;
-        makeSolution(Br, br, rows, solutions, n2);
+        return(makeSolution(Br, br, rows, solutions, n2));
 
     }
 
@@ -231,30 +283,45 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
     if(sprime == 0)
         return 1;
 
-    k = n1;
-    l = 0;
-    int count  =0;
-    for(k =n1; k<n2;k++) {
-      for(l = 0; l< n1; l++) {
-          for(i=0; i<cols-1; i++){
-              subtract(&matrix[k][i],&matrix[l][i], &matrix[rows+count][i]);
-              //Subtracta på riktigt fo helvede
-              //matrix[rows + count][i].n = matrix[k][i].n - matrix[l][i].n;
-              //matrix[rows + count][i].d = matrix[k][i].d - matrix[l][i].d;
-              //printf("%d \n", rows + count);
-          }
-          subtract(&solutions[l], &solutions[k], &solutions[rows+count]);
 
-          //solutions[rows + count].n = solutions[l].n - solutions[k].n;
-          //solutions[rows + count].d = solutions[l].d - solutions[k].d;
+    int count  =0;
+    for(l = 0; l< n1; l++) {
+        for(k =n1; k<n2;k++) {
+          for(i=0; i<cols-1; i++){
+              subtract(&matrix[l][i],&matrix[k][i], &tempMatrix[count][i]);
+          }
+          subtract(&solutions[l], &solutions[k], &tempSolution[count]);
           count++;
       }
     }
 
-    printMatrix(rows + count, cols, matrix, solutions);
+    for(i = n2; i<rows; i++){
+        for(j = 0; j<cols-1;j++) {
+            tempMatrix[count][j] = matrix[i][j];
+        }
+        tempSolution[count] = solutions[i];
+        count++;
+    }
 
 
+    printMatrix(rows, orgCols, matrix, solutions);
+    printf("CHANGNINF TO TEMP \n");
 
+    printMatrix(n1*(n2-n1), orgCols, tempMatrix, tempSolution);
+
+    for(i = 0; i< sprime; i++) {
+        for(j = 0; j< cols-1; j++) {
+            matrix[i][j] = tempMatrix[i][j];
+            //printf("%d/%d equals %d/%d \n", matrix[i][j].n, matrix[i][j].d, tempMatrix[i][j].n, tempMatrix[i][j].d);
+        }
+        solutions[i] = tempSolution[i];
+    }
+
+    printf("Sending this matrix to stage 2: \n");
+    printMatrix(sprime, orgCols, matrix, solutions);
+    printf("\n");
+
+    return(fm_stages(sprime, cols-1, matrix, solutions, tempMatrix, tempSolution, orgRows, orgCols));
 
 
     cont = true;
@@ -263,14 +330,22 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
 
 bool fm(size_t rows, size_t cols, signed char a[rows][cols], signed char c[rows])
 {
+
     long maxAllocRows = rows;
     int g;
-    for(g = 0; g<cols; g++){
+    /*for(g = 0; g<cols; g++){
         printf("%ld \n" ,maxAllocRows);
-        maxAllocRows = (ceil((double)maxAllocRows/2))*(ceil((double)maxAllocRows/2));
-    }
-    fraction matrix[rows + (int)(ceil(rows/2)*ceil(rows/2))][cols];
-    fraction solutions[rows+ (int)(ceil(rows/2)*ceil(rows/2))];
+        maxAllocRows += (ceil((double)maxAllocRows/2))*(ceil((double)maxAllocRows/2));
+    }*/
+    //fraction matrix[rows + (int)(ceil(rows/2)*ceil(rows/2))][cols];
+    //fraction solutions[rows+ (int)(ceil(rows/2)*ceil(rows/2))];
+    fraction matrix[rows][cols];
+    fraction tempMatrix[rows][cols];
+    fraction solutions[rows];
+    fraction tempSolution[rows];
+
+    //fraction matrix[maxAllocRows][cols];
+    //fraction solutions[maxAllocRows];
 
     for(i=0; i<rows;i++) {
         for(j=0; j<cols; j++) {
@@ -282,53 +357,49 @@ bool fm(size_t rows, size_t cols, signed char a[rows][cols], signed char c[rows]
         solutions[i].n = c[i];
         solutions[i].d = 1;
     }
-    while(cont == false) {
-        fm_stages(rows, cols, matrix, solutions);
-    }
 
-
-    return 0;
+    return fm_stages(rows, cols, matrix, solutions, tempMatrix, tempSolution, rows, cols);;
 }
 
 int main(int argc, char** argv){
-    size_t rows = 6;
-    size_t cols = 3;
+    size_t rows = 3;
+    size_t cols = 2;
     signed char a[rows][cols];
     signed char c[rows];
 
     a[0][0] = -1;
     a[0][1] = -2;
-    a[0][2] = 3;
+    //a[0][2] = 3;
     //a[0][3] = -4;
     //a[0][4] = 5;
     //a[0][5] = -6;
     a[1][0] = -2;
     a[1][1] = 3;
-    a[1][2] = -4;
+    //a[1][2] = -4;
     //a[1][3] = 5;
     //a[1][4] = -6;
     //a[1][5] = 7;
     a[2][0] = -3;
     a[2][1] = -4;
-    a[2][2] = 5;
+    //a[2][2] = 5;
     //a[2][3] = -6;
     //a[2][4] = 7;
     //a[2][5] = -8;
-    a[3][0] = -4;
-    a[3][1] = 5;
-    a[3][2] = -6;
+    //a[3][0] = -4;
+    //a[3][1] = 5;
+    //a[3][2] = -6;
     //a[3][3] = 7;
     //a[3][4] = -8;
     //a[3][5] = 9;
-    a[4][0] = -5;
-    a[4][1] = -6;
-    a[4][2] = 7;
+    //a[4][0] = -5;
+    //a[4][1] = -6;
+    //a[4][2] = 7;
     //a[4][3] = -8;
     //a[4][4] = 9;
     //a[4][5] = -10;
-    a[5][0] = -6;
-    a[5][1] = 7;
-    a[5][2] = -8;
+    //a[5][0] = -6;
+    //a[5][1] = 7;
+    //a[5][2] = -8;
     //a[5][3] = 9;
     //a[5][4] = -10;
     //a[5][5] = 11;
@@ -340,6 +411,14 @@ int main(int argc, char** argv){
     c[3] = -4;
     c[4] = -5;
     c[5] = -6;
+
+    /*
+    fraction f;
+    f.d = 10;
+    f.n = 20;
+
+    f = shorten(f);
+    printf("shorten is : %d/%d \n", f.n, f.d);*/
 
 
  /*   a[0][0] = -1;
@@ -411,7 +490,12 @@ int main(int argc, char** argv){
 */
     //printf(" %d  \n \n",INT_MIN);
 
-
-    return(fm(rows,cols,a,c));
+    int svar;
+    svar = fm(rows,cols,a,c);
+    if(svar ==1)
+        printf("System solved \n");
+    else
+        printf("not solved \n");
+    return(0);
 
 }
