@@ -18,6 +18,7 @@ int i = 0;
 int j = 0;
 int k = 0;
 int l = 0;
+int iterations = 1;
 bool cont = false;
 typedef struct {
     int n; //numerator
@@ -168,6 +169,7 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
     int rowChange;
     int g;
     printf("\n\n\nStarting new fm_stages \n");
+	iterations++;
     for(i = 0; i <rows; i++) {
         if(getSign(matrix[i][cols-1])>0) {
             //printf("%d/%d was positive! \n", matrix[i][cols-1].n, matrix[i][cols-1].d);
@@ -276,7 +278,6 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
         return(makeSolution(Br, br, rows, solutions, n2));
 
     }
-    printf("Rows are %d, Cols are %d", rows, cols);
     printf("\nThis is after divide \n");
     printMatrix(rows, cols, matrix, solutions);
     printf("\n");
@@ -323,8 +324,8 @@ int fm_stages(size_t rows, size_t cols, fraction matrix[rows][cols], fraction so
     }
 
     printf("Sending this matrix to stage 2: \n");
-    printMatrix(rows, cols, matrix, solutions);
-    printf("\n");
+    //printMatrix(rows, cols, matrix, solutions);
+    //printf("\n");
 	printMatrix(sprime, cols-1, tempMatrix, tempSolution);
     g = fm_stages(sprime, cols-1, tempMatrix, tempSolution);
     printf("\n");
@@ -364,18 +365,48 @@ bool fm(size_t rows, size_t cols, signed char a[rows][cols], signed char c[rows]
         solutions[i].d = 1;
     }
 	g = fm_stages(rows, cols, matrix, solutions);
+	printf("Number of iterations was now %d \n", iterations);
 //	free(matrix);
 //	free(solutions);
 	return(g);
 }
 
 int main(int argc, char** argv){
-    size_t rows = 6;
-    size_t cols = 6;
+    size_t rows = 1;
+    size_t cols = 1;
+
+
+
+	FILE* fp;
+	int buff[255];
+	fp = fopen("input/A1.0", "r");
+	fscanf(fp, "%d", buff);
+	rows = *buff;
+	printf("Rows are: %zu\n", rows );
+	fscanf(fp, "%d", buff);
+	cols = *buff;
+	printf("Cols are: %zu\n", cols);
     signed char a[rows][cols];
     signed char c[rows];
+	for(i = 0; i<rows; i++) {
+		for(j = 0; j<cols; j++){
+			fscanf(fp, "%d", buff);
+			a[i][j] = *buff;
+			printf("Value of index %d, %d is %d", i, j, a[i][j]);
+		}
+	}
+	printf("\n");
+	fp = fopen("input/c1.0", "r");
+	fscanf(fp, "%d", buff);
+	rows = *buff;
+	for(i = 0; i<rows; i++) {
+		fscanf(fp, "%d", buff);
+		c[i] = *buff;
+		printf("Value of index %d, %d is %d \n", i, j, c[i]);
 
-    a[0][0] = -1;
+	}	
+
+    /*a[0][0] = -1;
     a[0][1] = -2;
     a[0][2] = 3;
     a[0][3] = -4;
@@ -418,7 +449,7 @@ int main(int argc, char** argv){
     c[2] = -3;
     c[3] = -4;
     c[4] = -5;
-    c[5] = -6;
+    c[5] = -6;*/
 
     
    /* fraction f;
